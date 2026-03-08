@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArcGIS Pro Implementation Guide — Iberville Parish</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2230;
+      --border: #2a3444;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #f78166;
+      --accent4: #e3b341;
+      --text: #e6edf3;
+      --text-dim: #8b949e;
+      --text-dimmer: #484f58;
+      --done-bg: #1a2c1a;
+      --done-border: #3fb950;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 16px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    .topbar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .topbar-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .progress-bar-bg {
+      width: 160px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .progress-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      display: flex;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 53px;
+      height: calc(100vh - 53px);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+    }
+
+    .sidebar-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0 16px 8px;
+    }
+
+    .sidebar-phase {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .sidebar-phase:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    .sidebar-phase.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar-phase.complete {
+      color: var(--accent2);
+    }
+
+    .phase-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .sidebar-phase.active .phase-dot {
+      background: var(--accent);
+    }
+
+    .sidebar-phase.complete .phase-dot {
+      background: var(--accent2);
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      flex: 1;
+      padding: 32px 40px 80px;
+      min-width: 0;
+    }
+
+    /* ── PHASE SECTIONS ── */
+    .phase {
+      margin-bottom: 48px;
+      scroll-margin-top: 70px;
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .phase-number {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1.5px solid var(--border);
+      color: var(--text-dim);
+      transition: all 0.3s;
+    }
+
+    .phase.complete .phase-number {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .phase-title-block {}
+
+    .phase-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .phase-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .phase-count {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dimmer);
+    }
+
+    .phase-count .done-n {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    /* ── STEP CARDS ── */
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      transition: all 0.25s;
+    }
+
+    .step:hover {
+      border-color: #3a4555;
+    }
+
+    .step.done {
+      background: var(--done-bg);
+      border-color: var(--done-border);
+      opacity: 0.75;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .step-check {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--text-dimmer);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 11px;
+      color: transparent;
+    }
+
+    .step.done .step-check {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #000;
+      font-weight: 800;
+    }
+
+    .step-number {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      flex-shrink: 0;
+      margin-top: 3px;
+      min-width: 24px;
+    }
+
+    .step-text {
+      font-size: 13.5px;
+      color: var(--text);
+      font-weight: 500;
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .step.done .step-text {
+      color: var(--text-dim);
+      text-decoration: line-through;
+      text-decoration-color: var(--text-dimmer);
+    }
+
+    /* ── EXPAND TOGGLE ── */
+    .step-toggle {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dimmer);
+      flex-shrink: 0;
+      margin-top: 3px;
+      transition: transform 0.2s;
+    }
+
+    .step.open .step-toggle {
+      transform: rotate(180deg);
+    }
+
+    .step-detail {
+      display: none;
+      padding: 0 16px 14px 54px;
+      border-top: 1px solid var(--border);
+      margin-top: -1px;
+    }
+
+    .step.open .step-detail {
+      display: block;
+    }
+
+    /* ── DETAIL CONTENT ── */
+    .detail-note {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #79c0ff;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.7;
+    }
+
+    .code-block .kw {
+      color: #ff7b72;
+    }
+
+    .code-block .str {
+      color: #a5d6ff;
+    }
+
+    .code-block .cmt {
+      color: #484f58;
+    }
+
+    .code-block .fn {
+      color: #d2a8ff;
+    }
+
+    .code-block .num {
+      color: #f0883e;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 4px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .tag-warn {
+      background: #3d2b00;
+      color: var(--accent4);
+      border: 1px solid #5a4000;
+    }
+
+    .tag-tip {
+      background: #0d2818;
+      color: var(--accent2);
+      border: 1px solid #1a4a2a;
+    }
+
+    .tag-info {
+      background: #0c1e35;
+      color: var(--accent);
+      border: 1px solid #1a3a5c;
+    }
+
+    .inline-code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: #1c2230;
+      color: #79c0ff;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    .colour-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .colour-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--surface2);
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .colour-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .colour-info {
+      font-size: 11px;
+      font-family: var(--mono);
+      line-height: 1.3;
+    }
+
+    .colour-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .colour-hex {
+      color: var(--text-dimmer);
+    }
+
+    .url-link {
+      color: var(--accent);
+      word-break: break-all;
+      font-family: var(--mono);
+      font-size: 11.5px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .sub-list {
+      margin-top: 8px;
+      padding-left: 4px;
+    }
+
+    .sub-list li {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      list-style: none;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .sub-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--text-dimmer);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    /* ── PHASE DIVIDERS ── */
+    .phase-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 40px 0 24px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── SUMMARY BANNER ── */
+    .summary-banner {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 36px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-item {}
+
+    .summary-val {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+    }
+
+    .summary-key {
+      font-size: 11px;
+      color: var(--text-dimmer);
+      margin-top: 2px;
+    }
+
+    /* ── RESET BTN ── */
+    .reset-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dimmer);
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+
+    /* ── DONE BANNER ── */
+    #done-banner {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent2);
+      color: #000;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 14px 22px;
+      border-radius: 6px;
+      z-index: 200;
+      animation: slidein 0.4s ease;
+    }
+
+    @keyframes slidein {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* ── TOGGLE ALL BTN ── */
+    .toggle-all-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dimmer);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 12px;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .toggle-all-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .toggle-all-btn.all-done {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* checkbox is the only click-to-check target — make it obvious */
+    .step-check {
+      cursor: pointer;
+    }
+
+    .step-check:hover {
+      border-color: var(--accent2) !important;
+    }
+
+    .step.done .step-check:hover {
+      background: #2a8a3a;
+      border-color: #2a8a3a !important;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .summary-banner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-badge">ARCGIS PRO</span>
+      <div>
+        <div class="topbar-title">Louisiana Parish Campaign Map — Iberville + West Baton Rouge</div>
+        <div class="topbar-sub">17 Iberville Precincts · WBR Precinct 1C · Roads · Waterways · World Street Map · PDF + PNG +
+          SHP</div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="prog-fill"></div>
+      </div>
+      <div class="progress-label" id="prog-label">0 / 0 done</div>
+    </div>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-label">Phases</div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main" id="main">
+
+      <!-- SUMMARY -->
+      <div class="summary-banner">
+        <div class="summary-item">
+          <div class="summary-val">18</div>
+          <div class="summary-key">Precincts (17 Iberville + 1C WBR)</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val">6</div>
+          <div class="summary-key">Data downloads required</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val">2</div>
+          <div class="summary-key">Parishes covered</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" id="total-steps-val">—</div>
+          <div class="summary-key">Total steps</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="done-banner">✓ All steps complete — map is ready to deliver!</div>
+
+  <script>
+    const PHASES = [
+      {
+        id: "phase-data",
+        title: "PHASE 1 — Data Preparation",
+        subtitle: "Download all 6 source files using direct links, then verify before opening ArcGIS Pro",
+        color: "#58a6ff",
+        steps: [
+          {
+            text: "Download Louisiana Voting Districts — TIGER/Line 2020",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/TIGER2020PL/LAYER/VTD/2020/tl_2020_22_vtd20.zip" target="_blank">https://www2.census.gov/geo/tiger/TIGER2020PL/LAYER/VTD/2020/tl_2020_22_vtd20.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">tl_2020_22_vtd20.zip</span> — Louisiana statewide voting districts</li>
+  <li>Unzip into <span class="inline-code">Data\\tl_2020_22_vtd20\\</span></li>
+  <li>Confirm 5 files exist: <span class="inline-code">.shp .dbf .shx .prj .cpg</span></li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">CRITICAL FIELD NAMES</span> This file uses <span class="inline-code">STATEFP20</span> and <span class="inline-code">COUNTYFP20</span> (with the <b>20 suffix</b>) — NOT plain <span class="inline-code">STATEFP</span>/<span class="inline-code">COUNTYFP</span>. All SQL queries in this guide already use the correct names. Do not change them.</div>`
+          },
+          {
+            text: "Download Parish Boundaries — Census Cartographic Boundary 2024",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip" target="_blank">https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">cb_2024_us_county_500k.zip</span> — contains ALL US counties</li>
+  <li>Unzip into <span class="inline-code">Data\\cb_2024_us_county_500k\\</span></li>
+  <li>You will extract both Iberville AND West Baton Rouge from this single file in Phase 3</li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">FIPS CODES</span> Iberville Parish = <span class="inline-code">COUNTYFP = '047'</span> &nbsp;|&nbsp; West Baton Rouge = <span class="inline-code">COUNTYFP = '121'</span> &nbsp;|&nbsp; Both = <span class="inline-code">STATEFP = '22'</span></div>
+<div class="detail-note"><span class="tag tag-tip">FIELD NAMES</span> This file uses plain <span class="inline-code">STATEFP</span> and <span class="inline-code">COUNTYFP</span> (no year suffix) — confirmed correct.</div>`
+          },
+          {
+            text: "Download Iberville Parish Roads — TIGER/Line 2025",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/TIGER2025/ROADS/tl_2025_22047_roads.zip" target="_blank">https://www2.census.gov/geo/tiger/TIGER2025/ROADS/tl_2025_22047_roads.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">tl_2025_22047_roads.zip</span> — Iberville Parish (FIPS 047) roads</li>
+  <li>Unzip into <span class="inline-code">Data\\tl_2025_22047_roads\\</span></li>
+  <li>Pre-clipped to Iberville — no further clipping needed</li>
+  <li>Confirmed: <b>100 major road features</b> (S1100 + S1200)</li>
+</ul>`
+          },
+          {
+            text: "Download Iberville Parish Area Hydrography — TIGER/Line 2025",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/TIGER2025/AREAWATER/tl_2025_22047_areawater.zip" target="_blank">https://www2.census.gov/geo/tiger/TIGER2025/AREAWATER/tl_2025_22047_areawater.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">tl_2025_22047_areawater.zip</span></li>
+  <li>Unzip into <span class="inline-code">Data\\tl_2025_22047_areawater\\</span></li>
+  <li>Includes Mississippi River, Atchafalaya River, and all Iberville bayous</li>
+</ul>`
+          },
+          {
+            text: "Download West Baton Rouge Parish Roads — TIGER/Line 2020",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/TIGER2020/ROADS/tl_2020_22121_roads.zip" target="_blank">https://www2.census.gov/geo/tiger/TIGER2020/ROADS/tl_2020_22121_roads.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">tl_2020_22121_roads.zip</span> — West Baton Rouge Parish (FIPS 121)</li>
+  <li>Unzip into <span class="inline-code">Data\\tl_2020_22121_roads\\</span></li>
+  <li>Keep separate from the Iberville roads file</li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">NOTE</span> WBR Parish boundary comes from the same county file as Iberville — no extra download needed. You will extract it with COUNTYFP = '121' in Phase 3.</div>`
+          },
+          {
+            text: "Download Census Places — Louisiana Communities 2020",
+            detail: `<div class="detail-note">Direct download link:</div>
+<div class="code-block"><a class="url-link" href="https://www2.census.gov/geo/tiger/TIGER2020/PLACE/tl_2020_22_place.zip" target="_blank">https://www2.census.gov/geo/tiger/TIGER2020/PLACE/tl_2020_22_place.zip</a></div>
+<ul class="sub-list">
+  <li>File: <span class="inline-code">tl_2020_22_place.zip</span></li>
+  <li>Unzip into <span class="inline-code">Data\\tl_2020_22_place\\</span></li>
+  <li>Contains all cities, towns, and named communities in Louisiana</li>
+  <li>Key field: <span class="inline-code">NAME</span> — this is the label text displayed on the map</li>
+</ul>`
+          },
+          {
+            text: "Verify folder structure before opening ArcGIS Pro",
+            detail: `<div class="detail-note">Your project folder should look exactly like this:</div>
+<div class="code-block">E:\\Fiverr\\teesmith176\\
+  ├── Louisiana Parish Map Design.gdb\\   ← created by ArcGIS Pro
+  ├── Scripts\\
+  └── Data\\
+      ├── cb_2024_us_county_500k\\        ← parish boundaries (Iberville + WBR)
+      ├── tl_2020_22_vtd20\\              ← voting districts (all Louisiana)
+      ├── tl_2025_22047_roads\\           ← Iberville roads
+      ├── tl_2020_22121_roads\\           ← West Baton Rouge roads
+      ├── tl_2025_22047_areawater\\       ← Iberville waterways
+      └── tl_2020_22_place\\              ← Louisiana community places</div>
+<div class="detail-note"><span class="tag tag-warn">IMPORTANT</span> Always unzip completely before use. Never open shapefiles directly from inside a ZIP file — ArcGIS Pro may fail silently.</div>`
+          },
+          {
+            text: "Verify attribute fields in the VTD file before opening ArcGIS Pro",
+            detail: `<div class="detail-note">Open <span class="inline-code">tl_2020_22_vtd20.dbf</span> in Excel or a text editor and confirm these exact column names:</div>
+<ul class="sub-list">
+  <li><span class="inline-code">STATEFP20</span> — contains <span class="inline-code">22</span> for all Louisiana rows</li>
+  <li><span class="inline-code">COUNTYFP20</span> — <span class="inline-code">047</span> for Iberville, <span class="inline-code">121</span> for West Baton Rouge</li>
+  <li><span class="inline-code">VTDST20</span> — values are zero-padded 6 characters: <span class="inline-code">000001</span>, <span class="inline-code">00013C</span>, <span class="inline-code">00014A</span></li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">CONFIRMED</span> WBR Precinct 1C is stored as <span class="inline-code">'00001C'</span> — verified against the actual dataset.</div>
+<div class="detail-note"><span class="tag tag-warn">ZERO-PADDED</span> All VTDST20 codes are exactly 6 characters. Always use the full padded form in SQL: <span class="inline-code">'000001'</span> not <span class="inline-code">'1'</span>, and <span class="inline-code">'00013C'</span> not <span class="inline-code">'13C'</span>.</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-setup",
+        title: "PHASE 2 — ArcGIS Pro Project Setup",
+        subtitle: "Create project, set coordinate system, load basemap, import data",
+        color: "#d2a8ff",
+        steps: [
+          {
+            text: "Create a new ArcGIS Pro project",
+            detail: `<ul class="sub-list">
+  <li>Open ArcGIS Pro → open your existing <span class="inline-code">Louisiana Parish Map Design</span> project</li>
+  <li>Or: File → Open → browse to <span class="inline-code">E:\\Fiverr\\teesmith176\\</span></li>
+  <li>A default map opens — you will configure it in the next steps</li>
+</ul>`
+          },
+          {
+            text: "Set the Projected Coordinate System to NAD83 / Louisiana South",
+            detail: `<ul class="sub-list">
+  <li>In the Contents pane → right-click <b>Map</b> → <b>Properties</b></li>
+  <li>Click the <b>Coordinate Systems</b> tab</li>
+  <li>In the search box type: <span class="inline-code">Louisiana South</span></li>
+  <li>Expand <b>Projected Coordinate Systems → State Plane → NAD 1983</b></li>
+  <li>Select: <b>NAD 1983 StatePlane Louisiana South FIPS 1702 (US Feet)</b> — EPSG 3452</li>
+  <li>Click OK</li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">WHY</span> This projected CRS uses feet, is optimised for southern Louisiana, and ensures scale bars and measurements are accurate.</div>`
+          },
+          {
+            text: "Set Basemap — World Street Map at 30% transparency",
+            detail: `<ul class="sub-list">
+  <li>Top ribbon → <b>Map</b> tab → <b>Basemap</b> dropdown</li>
+  <li>Select <b>Streets</b> (Esri World Street Map)</li>
+  <li>In the Contents pane, expand the basemap group layer</li>
+  <li>Click the basemap layer → <b>Appearance</b> tab in the ribbon</li>
+  <li>Set <b>Transparency</b> to <b>30%</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">INTERNET REQUIRED</span> The basemap streams from Esri servers. Sign in to ArcGIS: File → Sign In if tiles appear gray or blank.</div>
+<div class="detail-note"><span class="tag tag-tip">WHY 30%</span> World Street Map at 30% transparency lets road names and area context show through, while keeping precinct colours and boundaries as the dominant visual elements.</div>`
+          },
+          {
+            text: "Add the Area Hydrography layer (Waterways)",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\tl_2025_22047_areawater\\</span></li>
+  <li>Drag <span class="inline-code">tl_2025_22047_areawater.shp</span> onto the map canvas</li>
+  <li>Rename it to <b>Waterways</b> in the Contents pane</li>
+</ul>`
+          },
+          {
+            text: "Add the Parish Boundaries source layer",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\cb_2024_us_county_500k\\</span></li>
+  <li>Drag <span class="inline-code">cb_2024_us_county_500k.shp</span> onto the map</li>
+  <li>Rename it to <b>Parish Boundaries Source</b> in the Contents pane</li>
+</ul>`
+          },
+          {
+            text: "Add the Iberville Roads layer",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\tl_2025_22047_roads\\</span></li>
+  <li>Drag <span class="inline-code">tl_2025_22047_roads.shp</span> onto the map</li>
+  <li>Rename it to <b>Iberville Roads Source</b></li>
+</ul>`
+          },
+          {
+            text: "Add the Louisiana Statewide Voting Districts layer",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\tl_2020_22_vtd20\\</span></li>
+  <li>Drag <span class="inline-code">tl_2020_22_vtd20.shp</span> onto the map</li>
+  <li>Rename it to <b>LA Voting Districts</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">NOTE</span> This layer shows all precincts statewide — it will look very dense. You will extract both the 17 Iberville precincts and WBR Precinct 1C in the next phase.</div>`
+          },
+          {
+            text: "Add the West Baton Rouge Roads layer",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\tl_2020_22121_roads\\</span></li>
+  <li>Drag <span class="inline-code">tl_2020_22121_roads.shp</span> onto the map</li>
+  <li>Rename it to <b>WBR Roads Source</b></li>
+</ul>`
+          },
+          {
+            text: "Add the Census Places layer (Community Labels)",
+            detail: `<ul class="sub-list">
+  <li>Catalog pane → navigate to <span class="inline-code">Data\\tl_2020_22_place\\</span></li>
+  <li>Drag <span class="inline-code">tl_2020_22_place.shp</span> onto the map</li>
+  <li>Rename it to <b>Communities</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">NOTE</span> This loads all Louisiana places statewide. You will clip it to the map extent in Phase 3.</div>`
+          },
+          {
+            text: "Arrange initial layer order in the Contents pane",
+            detail: `<div class="detail-note">Drag layers in the Contents pane to roughly match this initial order (you will refine this in Phase 6):</div>
+<div class="code-block">1.  Communities (LA Places)      ← top
+2.  LA Voting Districts
+3.  WBR Roads Source
+4.  Iberville Roads Source
+5.  Parish Boundaries Source
+6.  Waterways
+7.  World Street Map (Basemap)   ← always stays at bottom</div>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> Basemap must always be at the bottom or it covers everything. You will set the final precise draw order after extracting all layers in Phase 3.</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-extract",
+        title: "PHASE 3 — Extract & Filter Data",
+        subtitle: "Isolate the 17 target precincts, filter roads, clip parish boundary",
+        color: "#f78166",
+        steps: [
+          {
+            text: "Extract Iberville Parish Boundary from the county source file",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Parish Boundaries Source</b> in the Contents pane</li>
+  <li>Analysis tab → <b>Select by Attributes</b></li>
+  <li>Build expression:</li>
+</ul>
+<div class="code-block"><span class="kw">STATEFP</span> = <span class="str">'22'</span>
+<span class="kw">AND COUNTYFP</span> = <span class="str">'047'</span></div>
+<ul class="sub-list">
+  <li>Click Apply → status bar must show <b>1 of [total] selected</b></li>
+  <li>Right-click layer → <b>Data → Export Features</b></li>
+  <li>Output: <span class="inline-code">Iberville_Parish_Boundary</span> → save to <span class="inline-code">Louisiana Parish Map Design.gdb</span></li>
+  <li>Check <b>Add output to map</b> → click OK</li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">FIELD NAMES</span> The county boundary file uses plain <span class="inline-code">STATEFP</span> and <span class="inline-code">COUNTYFP</span> (no year suffix) — these are correct for this file only.</div>`
+          },
+          {
+            text: "Select all 17 Iberville precincts — SQL query on LA Voting Districts",
+            detail: `<ul class="sub-list">
+  <li>Click <b>LA Voting Districts</b> layer in Contents pane</li>
+  <li>Analysis tab → <b>Select by Attributes</b></li>
+  <li>Build this expression:</li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">CRITICAL — USE THESE EXACT FIELD NAMES</span> This file uses <span class="inline-code">STATEFP<b>20</b></span> and <span class="inline-code">COUNTYFP<b>20</b></span> with the year suffix. Using plain <span class="inline-code">STATEFP</span> will return ERROR 160327 — column does not exist.</div>
+<div class="code-block"><span class="kw">STATEFP20</span> = <span class="str">'22'</span>
+<span class="kw">AND COUNTYFP20</span> = <span class="str">'047'</span>
+<span class="kw">AND VTDST20 IN</span> (<span class="str">'000001','000003','000006','000007','000009',
+              '000010','000011','000012','000015','000016',
+              '000019','000020','000021','000022','000023',
+              '00013C','00014A'</span>)</div>
+<ul class="sub-list">
+  <li>Click Apply</li>
+  <li>Status bar at the bottom must show <b>17 of [total] selected</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">IF FEWER THAN 17</span> Open the attribute table (Ctrl+T), filter to STATEFP20='22' and COUNTYFP20='047', and verify the exact stored VTDST20 values match the zero-padded codes above.</div>`
+          },
+          {
+            text: "Export the 17 selected Iberville precincts to GDB",
+            detail: `<ul class="sub-list">
+  <li>Right-click <b>LA Voting Districts</b> → <b>Data → Export Features</b></li>
+  <li>Output name: <span class="inline-code">Iberville_Precincts_17</span> → save to GDB</li>
+  <li>Check <b>Add output to map</b> → click OK</li>
+  <li>You now have a clean layer with exactly 17 Iberville precinct polygons</li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">DO NOT REMOVE</span> Keep <b>LA Voting Districts</b> in the Contents pane — you still need it in the very next step to extract WBR Precinct 1C.</div>`
+          },
+          {
+            text: "Extract West Baton Rouge Precinct 1C — confirmed code 00001C",
+            detail: `<ul class="sub-list">
+  <li>Click <b>LA Voting Districts</b> layer in Contents pane</li>
+  <li>Analysis tab → <b>Select by Attributes</b></li>
+  <li>Build expression:</li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">USE 20-SUFFIX FIELDS</span> Same rule as the Iberville precinct query — this file requires <span class="inline-code">STATEFP20</span> and <span class="inline-code">COUNTYFP20</span>.</div>
+<div class="code-block"><span class="kw">STATEFP20</span> = <span class="str">'22'</span>
+<span class="kw">AND COUNTYFP20</span> = <span class="str">'121'</span>
+<span class="kw">AND VTDST20</span> = <span class="str">'00001C'</span></div>
+<ul class="sub-list">
+  <li>Click Apply — status bar must show <b>1 of [total] selected</b></li>
+  <li>Right-click → <b>Data → Export Features</b></li>
+  <li>Output: <span class="inline-code">WBR_Precinct_1C</span> → save to GDB</li>
+  <li>Check <b>Add output to map</b> → click OK</li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">CONFIRMED</span> Code <span class="inline-code">'00001C'</span> was verified against the actual dataset — this will return exactly 1 feature.</div>
+<div class="detail-note"><span class="tag tag-tip">NOW DONE WITH VTD FILE</span> Both Iberville precincts and WBR Precinct 1C are extracted. You can now remove <b>LA Voting Districts</b> from the Contents pane in the clean-up step at the end of this phase.</div>`
+          },
+          {
+            text: "Filter Iberville Roads to Major Roads only (S1100 + S1200)",
+            detail: `<ul class="sub-list">
+  <li>Click the <b>Iberville Roads Source</b> layer → Analysis tab → <b>Select by Attributes</b></li>
+  <li>Expression:</li>
+</ul>
+<div class="code-block"><span class="kw">MTFCC IN</span> (<span class="str">'S1100'</span>, <span class="str">'S1200'</span>)</div>
+<ul class="sub-list">
+  <li>Apply → confirmed <b>100 features selected</b> → Export Features → name: <span class="inline-code">Iberville_Roads_Major</span></li>
+  <li>Save to GDB → check Add output to map → OK</li>
+  <li>Repeat the same filter on <b>WBR Roads Source</b> → export as <span class="inline-code">WBR_Roads_Major</span></li>
+</ul>
+<div class="detail-note">
+  <span class="tag tag-info">S1100</span> Interstates, US Highways, State Highways &nbsp;|&nbsp;
+  <span class="tag tag-info">S1200</span> Secondary state/county roads
+</div>`
+          },
+          {
+            text: "Extract West Baton Rouge Parish Boundary",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Parish Boundaries Source</b> in the Contents pane</li>
+  <li>Analysis tab → <b>Select by Attributes</b></li>
+  <li>Build expression:</li>
+</ul>
+<div class="code-block"><span class="kw">STATEFP</span> = <span class="str">'22'</span>
+<span class="kw">AND COUNTYFP</span> = <span class="str">'121'</span></div>
+<ul class="sub-list">
+  <li>Click Apply → one polygon highlights (West Baton Rouge Parish)</li>
+  <li>Right-click layer → <b>Data → Export Features</b></li>
+  <li>Output: <span class="inline-code">WBR_Parish_Boundary</span> → save to GDB</li>
+  <li>Check <b>Add output to map</b> → click OK</li>
+</ul>
+<div class="detail-note"><span class="tag tag-info">SAME SOURCE FILE</span> You are querying the same <span class="inline-code">cb_2024_us_county_500k</span> layer — just changing COUNTYFP from 047 to 121.</div>`
+          },
+          {
+            text: "Clip Census Places to the map area (both parishes)",
+            detail: `<ul class="sub-list">
+  <li>Analysis tab → <b>Tools</b> → search for <b>Clip</b></li>
+  <li>Input Features: <b>Communities</b> (the statewide places layer)</li>
+  <li>Clip Features: <b>Iberville_Parish_Boundary</b></li>
+  <li>Output: <span class="inline-code">Communities_Iberville</span> → save to GDB</li>
+  <li>Run again with Clip Features: <b>WBR_Parish_Boundary</b> → output: <span class="inline-code">Communities_WBR</span></li>
+  <li>Delete the original statewide <b>Communities</b> layer from Contents pane</li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> Alternatively use <b>Select by Location</b> (intersect with a merged parish boundary) to grab communities from both parishes in one step. Either approach works.</div>`
+          },
+          {
+            text: "Clean up source layers and verify final Contents pane",
+            detail: `<div class="detail-note">Right-click and Remove these working layers (data is safe in GDB):</div>
+<div class="code-block"><span class="cmt">Remove:</span>  Parish Boundaries Source
+<span class="cmt">Remove:</span>  Iberville Roads Source
+<span class="cmt">Remove:</span>  WBR Roads Source
+<span class="cmt">Remove:</span>  LA Voting Districts
+<span class="cmt">Remove:</span>  LA Places</div>
+<div class="detail-note">Your Contents pane should now show exactly these layers:</div>
+<div class="code-block">✓  Communities_Iberville
+✓  Communities_WBR
+✓  WBR_Precinct_1C
+✓  Iberville_Precincts_17
+✓  WBR_Roads_Major
+✓  Iberville_Roads_Major
+✓  WBR_Parish_Boundary
+✓  Iberville_Parish_Boundary
+✓  Waterways
+✓  World Street Map  (basemap — bottom)</div>
+<div class="detail-note"><span class="tag tag-tip">SAVE NOW</span> Press Ctrl+S to save the project before moving to symbology.</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-sym",
+        title: "PHASE 4 — Symbology",
+        subtitle: "Apply colours, transparency, and visual styling to every layer",
+        color: "#e3b341",
+        steps: [
+          {
+            text: "Style Waterways — solid river blue fill, no outline",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Waterways</b> layer → Feature Layer ribbon → <b>Appearance → Symbology</b></li>
+  <li>Method: <b>Single Symbol</b></li>
+  <li>Click the symbol patch → <b>Properties</b> tab</li>
+  <li>Fill colour: <span class="inline-code">#73B2FF</span> (light cornflower blue)</li>
+  <li>Outline: <b>No colour</b></li>
+  <li>Click Apply → OK</li>
+</ul>
+<div class="colour-grid">
+  <div class="colour-chip"><div class="colour-swatch" style="background:#73B2FF"></div><div class="colour-info"><div class="colour-name">Waterways fill</div><div class="colour-hex">#73B2FF</div></div></div>
+</div>`
+          },
+          {
+            text: "Style Iberville Parish Boundary — no fill, solid dark navy outline 1.5pt",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Parish_Boundary</b> → Symbology pane → Single Symbol</li>
+  <li>Fill colour: <b>No colour</b> (transparent fill)</li>
+  <li>Outline colour: <span class="inline-code">#1A1A2E</span> (very dark navy)</li>
+  <li>Outline width: <b>1.5pt</b></li>
+  <li>Outline style: <b>Solid</b></li>
+</ul>
+<div class="colour-grid">
+  <div class="colour-chip"><div class="colour-swatch" style="background:#1A1A2E"></div><div class="colour-info"><div class="colour-name">Iberville Boundary</div><div class="colour-hex">#1A1A2E · 1.5pt solid</div></div></div>
+</div>`
+          },
+          {
+            text: "Style Iberville Roads — Unique Values by MTFCC, two road classes",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Roads_Major</b> → Symbology → change method to <b>Unique Values</b></li>
+  <li>Value field: <b>MTFCC</b></li>
+  <li>Set S1100 (Highways): colour <span class="inline-code">#CCCCCC</span>, width <b>1.5pt</b></li>
+  <li>Set S1200 (Secondary): colour <span class="inline-code">#9C9C9C</span>, width <b>0.8pt</b></li>
+  <li>Right-click <b>&lt;all other values&gt;</b> → Remove</li>
+</ul>
+<div class="colour-grid">
+  <div class="colour-chip"><div class="colour-swatch" style="background:#CCCCCC"></div><div class="colour-info"><div class="colour-name">S1100 Highway</div><div class="colour-hex">#CCCCCC · 1.5pt</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#9C9C9C"></div><div class="colour-info"><div class="colour-name">S1200 Secondary</div><div class="colour-hex">#9C9C9C · 0.8pt</div></div></div>
+</div>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> Light gray roads sit softly over the World Street Map without competing with precinct colours.</div>`
+          },
+          {
+            text: "Apply Unique Value symbology to Iberville_Precincts_17",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Precincts_17</b> → Symbology → change to <b>Unique Values</b></li>
+  <li>Value field: <b>VTDST20</b></li>
+  <li>ArcGIS Pro assigns random colours — you will override each one in the next step</li>
+  <li>Set all <b>outline strokes to: White (#FFFFFF), 1pt</b> — do this first before colour changes</li>
+</ul>`
+          },
+          {
+            text: "Assign exact hex colours to each of the 17 precincts",
+            detail: `<div class="detail-note">Double-click each precinct's colour patch in the Symbology pane → Properties → enter the hex value below:</div>
+<div class="colour-grid">
+  <div class="colour-chip"><div class="colour-swatch" style="background:#C0392B"></div><div class="colour-info"><div class="colour-name">000001</div><div class="colour-hex">#C0392B</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#1A5276"></div><div class="colour-info"><div class="colour-name">000003</div><div class="colour-hex">#1A5276</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#117A65"></div><div class="colour-info"><div class="colour-name">000006</div><div class="colour-hex">#117A65</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#7D3C98"></div><div class="colour-info"><div class="colour-name">000007</div><div class="colour-hex">#7D3C98</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#CA6F1E"></div><div class="colour-info"><div class="colour-name">000009</div><div class="colour-hex">#CA6F1E</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#1E8449"></div><div class="colour-info"><div class="colour-name">000010</div><div class="colour-hex">#1E8449</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#2874A6"></div><div class="colour-info"><div class="colour-name">000011</div><div class="colour-hex">#2874A6</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#A93226"></div><div class="colour-info"><div class="colour-name">000012</div><div class="colour-hex">#A93226</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#D4AC0D"></div><div class="colour-info"><div class="colour-name">000015</div><div class="colour-hex">#D4AC0D</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#2E86C1"></div><div class="colour-info"><div class="colour-name">000016</div><div class="colour-hex">#2E86C1</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#148F77"></div><div class="colour-info"><div class="colour-name">000019</div><div class="colour-hex">#148F77</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#E74C3C"></div><div class="colour-info"><div class="colour-name">000020</div><div class="colour-hex">#E74C3C</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#5D6D7E"></div><div class="colour-info"><div class="colour-name">000021</div><div class="colour-hex">#5D6D7E</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#784212"></div><div class="colour-info"><div class="colour-name">000022</div><div class="colour-hex">#784212</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#0E6655"></div><div class="colour-info"><div class="colour-name">000023</div><div class="colour-hex">#0E6655</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#6C3483"></div><div class="colour-info"><div class="colour-name">00013C</div><div class="colour-hex">#6C3483</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#1ABC9C"></div><div class="colour-info"><div class="colour-name">00014A</div><div class="colour-hex">#1ABC9C</div></div></div>
+</div>`
+          },
+          {
+            text: "Set Iberville precinct layer transparency to 35%",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Precincts_17</b> → Feature Layer ribbon → <b>Appearance</b> tab</li>
+  <li>Find the <b>Transparency</b> slider (or type-in box)</li>
+  <li>Set to <b>35%</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> 35% keeps precinct colours vivid and distinguishable while allowing the World Street Map to show through for geographic context.</div>`
+          },
+          {
+            text: "Save the symbology as a Layer File (.lyrx)",
+            detail: `<ul class="sub-list">
+  <li>Right-click <b>Iberville_Precincts_17</b> in Contents pane</li>
+  <li>Select <b>Save As Layer File</b></li>
+  <li>Save as <span class="inline-code">Iberville_Precincts_17.lyrx</span> in your project folder</li>
+  <li>This preserves all 17 colours — if you ever need to reload the data, simply drag this .lyrx file back in</li>
+</ul>`
+          },
+          {
+            text: "Style WBR Parish Boundary — dashed outline, no fill",
+            detail: `<ul class="sub-list">
+  <li>Click <b>WBR_Parish_Boundary</b> → Symbology pane → Single Symbol</li>
+  <li>Fill colour: <b>No colour</b> (transparent fill)</li>
+  <li>Outline colour: <span class="inline-code">#4A235A</span> (deep purple — visually distinct from Iberville's navy)</li>
+  <li>Outline width: <b>1.5pt</b></li>
+  <li>Outline style: <b>Dashed</b> — click the line style dropdown and choose a medium dash to distinguish it from the solid Iberville boundary</li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> Using dashed vs solid outlines for the two parish boundaries immediately tells the viewer they are looking at two different administrative areas without needing to check the legend.</div>`
+          },
+          {
+            text: "Style WBR Precinct 1C — bold highlight fill",
+            detail: `<ul class="sub-list">
+  <li>Click <b>WBR_Precinct_1C</b> → Symbology pane → Single Symbol</li>
+  <li>Fill colour: <span class="inline-code">#F5CBA7</span> (warm amber — distinct from all Iberville precinct colours)</li>
+  <li>Outline colour: <span class="inline-code">#E67E22</span> (bold orange)</li>
+  <li>Outline width: <b>2pt</b></li>
+  <li>Set layer Transparency to <b>35%</b> — matches Iberville precinct transparency</li>
+</ul>
+<div class="colour-grid">
+  <div class="colour-chip"><div class="colour-swatch" style="background:#F5CBA7"></div><div class="colour-info"><div class="colour-name">WBR Precinct 1C</div><div class="colour-hex">#F5CBA7 fill</div></div></div>
+  <div class="colour-chip"><div class="colour-swatch" style="background:#E67E22"></div><div class="colour-info"><div class="colour-name">WBR Precinct 1C</div><div class="colour-hex">#E67E22 outline</div></div></div>
+</div>`
+          },
+          {
+            text: "Style WBR Roads Major — same style as Iberville roads",
+            detail: `<ul class="sub-list">
+  <li>Click <b>WBR_Roads_Major</b> → Symbology → <b>Unique Values</b></li>
+  <li>Value field: <b>MTFCC</b></li>
+  <li>Set S1100 (Highways): colour <span class="inline-code">#CCCCCC</span>, width <b>1.5pt</b></li>
+  <li>Set S1200 (Secondary): colour <span class="inline-code">#9C9C9C</span>, width <b>0.8pt</b></li>
+  <li>Remove the &lt;all other values&gt; entry (right-click → Remove)</li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> Using identical road colours for both parishes gives visual consistency — viewers won't be confused by roads changing style at the parish border.</div>`
+          },
+          {
+            text: "Style Census Places (Communities) — subtle point markers, no fill",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Communities_Iberville</b> → Symbology → Single Symbol</li>
+  <li>Change the symbol type to <b>Circle 1</b> (small dot)</li>
+  <li>Fill colour: <span class="inline-code">#FFFFFF</span> (white)</li>
+  <li>Outline colour: <span class="inline-code">#444444</span> (dark gray)</li>
+  <li>Size: <b>5pt</b></li>
+  <li>Repeat the same settings for <b>Communities_WBR</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">TIP</span> The communities layer is primarily a label anchor — the dot just marks the location. Keep it small so it doesn't compete with precinct colours.</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-labels",
+        title: "PHASE 5 — Labels",
+        subtitle: "Add precinct numbers, parish name, and highway labels",
+        color: "#3fb950",
+        steps: [
+          {
+            text: "Iberville Precincts — labels OFF (confirmed intentional)",
+            detail: `<div class="detail-note"><span class="tag tag-info">CONFIRMED OFF</span> Precinct labels are intentionally <b>disabled</b> on <b>Iberville_Precincts_17</b>. The tight central cluster of precincts makes any text label unreadable — precincts are distinguished by colour and the legend only.</div>
+<ul class="sub-list">
+  <li>Confirm the <b>Label</b> button is toggled <b>OFF</b> for this layer</li>
+  <li>If labels are on, click <b>Iberville_Precincts_17</b> → Labeling tab → toggle OFF</li>
+</ul>`
+          },
+          {
+            text: "Label the Iberville Parish boundary",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Parish_Boundary</b> → Labeling tab → toggle Label ON</li>
+  <li>Field: <b>NAME</b> (will show "Iberville Parish")</li>
+  <li>Font: <b>Inter Medium, 13pt</b>, <span class="inline-code">#1F4E79</span> (dark navy)</li>
+  <li>Under <b>Position</b> tab → set <b>Offset X: -25pt, Offset Y: -15pt</b></li>
+  <li>Halo: white, 1.5pt — so it reads clearly over the aerial basemap</li>
+</ul>`
+          },
+          {
+            text: "Label the West Baton Rouge Parish boundary",
+            detail: `<ul class="sub-list">
+  <li>Click <b>WBR_Parish_Boundary</b> → Labeling tab → toggle Label ON</li>
+  <li>Field: <b>NAME</b> (will show "West Baton Rouge Parish")</li>
+  <li>Font: <b>Inter Medium, 13pt</b>, <span class="inline-code">#4A235A</span> (deep purple — matches the WBR boundary outline colour)</li>
+  <li>Under <b>Position</b> tab → set <b>Offset X: 25pt, Offset Y: -15pt</b></li>
+  <li>Halo: white, 1.5pt</li>
+</ul>`
+          },
+          {
+            text: "Label WBR Precinct 1C",
+            detail: `<ul class="sub-list">
+  <li>Click <b>WBR_Precinct_1C</b> → Labeling tab → toggle Label ON</li>
+  <li>Expression (Arcade): <span class="inline-code">"Precinct 1C"</span> (static text) — or use field <b>VTDST20</b> if you prefer the code</li>
+  <li>Font: <b>Inter Medium, 11pt</b>, <span class="inline-code">#E67E22</span> (orange — matches the precinct outline)</li>
+  <li>Halo: white, 1.5pt</li>
+  <li>Placement: <b>Horizontal in polygon, Best Position</b></li>
+  <li>Enable <b>Allow leader lines</b> in case the label needs to sit outside the polygon boundary</li>
+</ul>`
+          },
+          {
+            text: "Enable Community Labels on Census Places layers",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Communities_Iberville</b> → Labeling tab → toggle Label ON</li>
+  <li>Field: <b>NAME</b></li>
+  <li>Font: <b>Inter Medium, 9pt</b>, <span class="inline-code">#1A1A2E</span> (very dark, near black)</li>
+  <li>Halo: white, 1.5pt — essential for legibility over aerial imagery</li>
+  <li>Placement: <b>Best position around point</b>, offset 3pt from the dot</li>
+  <li>Repeat identical settings for <b>Communities_WBR</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">FILTER TO MAJOR COMMUNITIES</span> If too many small places clutter the map, add a SQL filter on the label class: switch to SQL mode and enter <span class="inline-code">ALAND > 500000</span> to show only larger communities, or manually label only the most campaign-relevant towns.</div>`
+          },
+          {
+            text: "Enable highway labels on Roads — FULLNAME, Inter Medium 9pt, S1100 only",
+            detail: `<ul class="sub-list">
+  <li>Click <b>Iberville_Roads_Major</b> → Labeling tab → toggle ON</li>
+  <li>Field: <b>FULLNAME</b></li>
+  <li>Font: <b>Inter Medium, 9pt</b>, colour <span class="inline-code">#2C3E50</span></li>
+  <li>Halo: white, 1pt</li>
+  <li>Placement: <b>Along line, curved</b> — labels follow the road direction</li>
+  <li>In <b>Label Class</b> → click the <b>SQL</b> button (filter icon)</li>
+  <li>Switch language to <b>SQL</b> → enter: <span class="inline-code">MTFCC = 'S1100'</span> → click the green ✓ to validate → Apply</li>
+  <li>This ensures only major S1100 highways are labelled — not every secondary road</li>
+  <li>Repeat identical settings for <b>WBR_Roads_Major</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">ARCADE SYNTAX</span> If your Label Class is set to Arcade mode instead of SQL, use: <span class="inline-code">$feature.MTFCC == 'S1100'</span> (double equals).</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-order",
+        title: "PHASE 6 — Layer Draw Order",
+        subtitle: "Set the precise drawing order in the Contents pane before building the layout",
+        color: "#58a6ff",
+        steps: [
+          {
+            text: "Set final layer draw order — top to bottom in Contents pane",
+            detail: `<div class="detail-note">Drag layers in the Contents pane to match this exact order:</div>
+<div class="code-block"><span class="num">1.</span>  Communities_WBR             <span class="cmt">← top (labels must be visible)</span>
+<span class="num">2.</span>  Communities_Iberville
+<span class="num">3.</span>  WBR_Precinct_1C
+<span class="num">4.</span>  Iberville_Precincts_17
+<span class="num">5.</span>  WBR_Roads_Major
+<span class="num">6.</span>  Iberville_Roads_Major
+<span class="num">7.</span>  WBR_Parish_Boundary
+<span class="num">8.</span>  Iberville_Parish_Boundary
+<span class="num">9.</span>  Waterways
+<span class="num">10.</span> World Street Map             <span class="cmt">← basemap always at bottom</span></div>
+<div class="detail-note"><span class="tag tag-tip">WHY THIS ORDER</span> Communities and precincts sit above roads and boundaries — otherwise community labels and dot markers would be hidden beneath road lines.</div>`
+          },
+          {
+            text: "Press Ctrl+S to save",
+            detail: `<div class="detail-note">Always save before building the layout. ArcGIS Pro auto-saves periodically but saving manually before a new phase prevents losing layer order changes.</div>`
+          },
+        ]
+      },
+      {
+        id: "phase-layout",
+        title: "PHASE 7 — Print Layout",
+        subtitle: "Build the final campaign-ready map layout with all map elements",
+        color: "#58a6ff",
+        steps: [
+          {
+            text: "Create a new Layout",
+            detail: `<ul class="sub-list">
+  <li>Top ribbon → <b>Insert</b> tab → <b>New Layout</b></li>
+  <li>For a campaign handout: choose <b>ANSI Letter Landscape (11 × 8.5 in)</b></li>
+  <li>For a large poster: choose <b>ANSI C (22 × 17 in)</b></li>
+  <li>The layout canvas opens as a new tab</li>
+</ul>`
+          },
+          {
+            text: "Insert and configure the main Map Frame",
+            detail: `<ul class="sub-list">
+  <li>Layout ribbon → <b>Insert → Map Frame</b></li>
+  <li>Draw a large rectangle covering roughly 80% of the canvas (leave room at top for title, bottom for legend/scale)</li>
+  <li>Right-click the map frame → <b>Activate</b></li>
+  <li>Use the navigation wheel to zoom in so <b>both Iberville Parish and WBR Precinct 1C</b> are visible with ~5% margin on all sides</li>
+  <li>Right-click → <b>Deactivate</b> when done</li>
+</ul>
+<div class="detail-note"><span class="tag tag-warn">CHECK</span> After deactivating, confirm the aerial basemap tiles are sharp (not blurry/pixelated). If blurry, re-activate and zoom in slightly further — Esri serves sharper tiles at closer zoom levels.</div>`
+          },
+          {
+            text: "Add the map title and subtitle text",
+            detail: `<ul class="sub-list">
+  <li>Layout ribbon → <b>Insert → Straight Text</b></li>
+  <li>Click above the map frame to place the title</li>
+  <li>Title text: <b>IBERVILLE PARISH, LOUISIANA</b></li>
+  <li>Font: Inter Bold or Arial Bold, 22pt, <span class="inline-code">#1F4E79</span></li>
+  <li>Add a second text element below for the subtitle:</li>
+  <li>Subtitle: <b>Voting Precinct Boundaries</b></li>
+  <li>Font: Inter Regular or Arial, 11pt, <span class="inline-code">#4A4A6A</span></li>
+</ul>`
+          },
+          {
+            text: "Insert the Legend",
+            detail: `<ul class="sub-list">
+  <li>Insert tab → <b>Legend</b> → draw in a corner of the layout (lower right recommended)</li>
+  <li>In the <b>Format Legend</b> pane → <b>Legend Items</b></li>
+  <li>Remove: World Street Map basemap (select it in the list → delete)</li>
+  <li>Keep: Iberville_Precincts_17, WBR_Precinct_1C, Iberville_Roads_Major, WBR_Roads_Major, Waterways, Iberville_Parish_Boundary, WBR_Parish_Boundary, Communities</li>
+  <li>Rename legend items: right-click each → Properties → change display name to plain English e.g. "Iberville Parish Precincts", "WBR Precinct 1C", "Major Roads", "Rivers & Waterways", "Communities"</li>
+  <li>Set legend background: white fill, 80% opacity, thin gray border</li>
+</ul>`
+          },
+          {
+            text: "Insert Scale Bar",
+            detail: `<ul class="sub-list">
+  <li>Insert → <b>Scale Bar</b> → choose <b>Alternating Scale Bar 1</b></li>
+  <li>Place in the lower-left corner of the map frame</li>
+  <li>Format Scale Bar pane → Units: <b>Miles</b></li>
+  <li>Set division value to <b>5 miles</b> (adjust if the bar looks too wide or narrow)</li>
+</ul>`
+          },
+          {
+            text: "Insert North Arrow",
+            detail: `<ul class="sub-list">
+  <li>Insert → <b>North Arrow</b> → choose ESRI North 1 or North Arrow 1</li>
+  <li>Place adjacent to the scale bar</li>
+  <li>Size: approximately 0.4 in height</li>
+</ul>`
+          },
+          {
+            text: "Insert Locator / Inset Map (Louisiana context)",
+            detail: `<ul class="sub-list">
+  <li>Insert → <b>Map Frame</b> → draw a small square in an unused corner (~2 × 2 in)</li>
+  <li>In the dropdown that appears, select <b>New Map</b> — this creates a separate small map</li>
+  <li>In this new small map, add: the <span class="inline-code">cb_2020_22_county_500k</span> layer (all Louisiana parishes)</li>
+  <li>Also add Iberville_Parish_Boundary → style it as a solid red fill so it pops</li>
+  <li>Set basemap for this small map to <b>Light Gray Canvas</b> (cleaner for a locator)</li>
+  <li>Zoom the locator map out to show all of Louisiana</li>
+  <li>Add a thin border around this frame: Format Map Frame → Border → black, 1pt</li>
+</ul>`
+          },
+          {
+            text: "Add the data source credit line",
+            detail: `<ul class="sub-list">
+  <li>Insert → Text → click in the bottom margin below the map frame</li>
+  <li>Text: <b>Data Sources: U.S. Census Bureau TIGER/Line 2020  |  Esri World Street Map Basemap</b></li>
+  <li>Font: Arial, 7pt, gray (<span class="inline-code">#888888</span>)</li>
+  <li>Align to the right margin of the layout</li>
+</ul>`
+          },
+        ]
+      },
+      {
+        id: "phase-export",
+        title: "PHASE 8 — Export Deliverables",
+        subtitle: "Export all three final deliverables: PDF, PNG, and Shapefiles",
+        color: "#f78166",
+        steps: [
+          {
+            text: "Final visual check before export",
+            detail: `<div class="detail-note">Before exporting, verify each of these in the layout view:</div>
+<ul class="sub-list">
+  <li>All 17 Iberville precincts visible with distinct colours</li>
+  <li>WBR Precinct 1C visible with amber fill and orange outline</li>
+  <li>Both parish boundaries visible and visually distinct (solid navy vs dashed purple)</li>
+  <li>Community names labelled on both parishes — Inter Medium 9pt, white halo</li>
+  <li>Roads visible on both parishes but not overpowering the precinct fills</li>
+  <li>Mississippi River and waterways prominent in #73B2FF</li>
+  <li>Basemap aerial imagery visible beneath transparent precincts</li>
+  <li>Legend, scale bar, north arrow, title all present</li>
+  <li>Locator map shows both parishes within Louisiana</li>
+</ul>`
+          },
+          {
+            text: "Export — High-Resolution PDF",
+            detail: `<ul class="sub-list">
+  <li>Layout ribbon → <b>Share → Export Layout</b></li>
+  <li>Format: <b>PDF</b></li>
+  <li>Resolution: <b>300 DPI</b></li>
+  <li>Enable: <b>Embed fonts</b> ✓</li>
+  <li>Enable: <b>Convert features to vectors</b> ✓ — this ensures crisp precinct boundary lines at any zoom</li>
+  <li>File name: <span class="inline-code">Iberville_Precinct_Map_FINAL.pdf</span></li>
+  <li>Click <b>Export</b></li>
+</ul>
+<div class="detail-note"><span class="tag tag-tip">LARGE FORMAT</span> If printing on a poster (ANSI C or larger), increase to 600 DPI for razor-sharp output.</div>`
+          },
+          {
+            text: "Export — High-Resolution PNG",
+            detail: `<ul class="sub-list">
+  <li>Layout ribbon → <b>Share → Export Layout</b></li>
+  <li>Format: <b>PNG</b></li>
+  <li>Resolution: <b>300 DPI</b> for print-quality / <b>150 DPI</b> for email/web</li>
+  <li>File name: <span class="inline-code">Iberville_Precinct_Map_FINAL.png</span></li>
+  <li>Click <b>Export</b></li>
+</ul>`
+          },
+          {
+            text: "Export Shapefiles — all layers",
+            detail: `<ul class="sub-list">
+  <li>Right-click each layer → <b>Data → Export Features</b> → Output type: <b>Shapefile</b></li>
+  <li>Save all to <span class="inline-code">C:\\GIS\\Iberville_Campaign\\Deliverables\\SHP\\</span></li>
+</ul>
+<div class="code-block">Iberville_Precincts_17      →  Iberville_Precincts_17.shp
+WBR_Precinct_1C            →  WBR_Precinct_1C.shp
+Iberville_Parish_Boundary  →  Iberville_Parish_Boundary.shp
+WBR_Parish_Boundary        →  WBR_Parish_Boundary.shp
+Iberville_Roads_Major      →  Iberville_Roads_Major.shp
+WBR_Roads_Major            →  WBR_Roads_Major.shp
+Waterways                  →  Iberville_Waterways.shp
+Communities_Iberville      →  Communities_Iberville.shp
+Communities_WBR            →  Communities_WBR.shp</div>
+<div class="detail-note"><span class="tag tag-warn">CRITICAL</span> Each shapefile exports 5 companion files: <span class="inline-code">.shp .dbf .shx .prj .cpg</span> — ALL must be included when delivering. Zip the entire SHP folder as one archive.</div>`
+          },
+          {
+            text: "Export Shapefiles — remaining 3 layers",
+            detail: `<div class="detail-note">Repeat the export process for the other three layers:</div>
+<div class="code-block">Iberville_Parish_Boundary  →  Iberville_Parish_Boundary.shp
+Iberville_Roads_Major      →  Iberville_Roads_Major.shp
+Waterways                  →  Iberville_Waterways.shp</div>
+<div class="detail-note"><span class="tag tag-warn">CRITICAL</span> Each shapefile exports 5 companion files: <span class="inline-code">.shp .dbf .shx .prj .cpg</span> — ALL must be included when delivering. Zip the entire SHP folder as one archive.</div>`
+          },
+          {
+            text: "Zip all Shapefiles into a single delivery archive",
+            detail: `<ul class="sub-list">
+  <li>Open your <span class="inline-code">Deliverables\\SHP\\</span> folder in Windows Explorer</li>
+  <li>Select all files → right-click → <b>Send to → Compressed (zipped) folder</b></li>
+  <li>Name: <span class="inline-code">Iberville_Campaign_GIS_Data.zip</span></li>
+</ul>
+<div class="detail-note">Final deliverables folder should contain:</div>
+<div class="code-block">Deliverables\\
+  ├── Iberville_Precinct_Map_FINAL.pdf
+  ├── Iberville_Precinct_Map_FINAL.png
+  └── Iberville_Campaign_GIS_Data.zip</div>`
+          },
+        ]
+      }
+    ];
+
+    /* ─── BUILD DOM ─── */
+    let totalSteps = 0;
+    PHASES.forEach(p => totalSteps += p.steps.length);
+    document.getElementById('total-steps-val').textContent = totalSteps;
+
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+
+    PHASES.forEach((phase, pi) => {
+      /* sidebar link */
+      const sLink = document.createElement('a');
+      sLink.href = '#' + phase.id;
+      sLink.className = 'sidebar-phase';
+      sLink.id = 'nav-' + phase.id;
+      sLink.innerHTML = `<span class="phase-dot"></span><span>${phase.title.split('—')[1].trim()}</span>`;
+      sidebar.appendChild(sLink);
+
+      /* phase section */
+      const section = document.createElement('section');
+      section.className = 'phase';
+      section.id = phase.id;
+
+      const header = document.createElement('div');
+      header.className = 'phase-header';
+      header.innerHTML = `
+    <div class="phase-number" style="border-color:${phase.color}40;color:${phase.color}">${pi + 1}</div>
+    <div class="phase-title-block">
+      <div class="phase-title">${phase.title}</div>
+      <div class="phase-subtitle">${phase.subtitle}</div>
+    </div>
+    <div class="phase-count" id="count-${phase.id}"><span class="done-n">0</span> / ${phase.steps.length}</div>
+    <button class="toggle-all-btn" id="toggleall-${phase.id}" onclick="toggleAll('${phase.id}')">✓ Mark All Done</button>
+  `;
+      section.appendChild(header);
+
+      phase.steps.forEach((step, si) => {
+        const card = document.createElement('div');
+        const stepId = `${phase.id}-step-${si}`;
+        card.className = 'step';
+        card.id = stepId;
+
+        const hasDetail = !!step.detail;
+        card.innerHTML = `
+      <div class="step-header">
+        <div class="step-check" title="Mark as done">✓</div>
+        <div class="step-number">${si + 1}.</div>
+        <div class="step-text">${step.text}</div>
+        ${hasDetail ? '<div class="step-toggle">▼</div>' : ''}
+      </div>
+      ${hasDetail ? `<div class="step-detail">${step.detail}</div>` : ''}
+    `;
+
+        const stepHeader = card.querySelector('.step-header');
+        const checkbox = card.querySelector('.step-check');
+
+        /* clicking the checkbox = toggle done/undone only */
+        checkbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleDone(card, phase.id);
+        });
+
+        /* clicking anywhere else on the header = expand/collapse detail */
+        stepHeader.addEventListener('click', (e) => {
+          if (e.target === checkbox || e.target.closest('.step-check')) return;
+          if (hasDetail) card.classList.toggle('open');
+        });
+
+        section.appendChild(card);
+      });
+
+      main.appendChild(section);
+    });
+
+    function toggleDone(card, phaseId) {
+      card.classList.toggle('done');
+      updateProgress();
+      updatePhaseCount(phaseId);
+    }
+
+    function toggleAll(phaseId) {
+      const section = document.getElementById(phaseId);
+      const steps = section.querySelectorAll('.step');
+      const allDone = [...steps].every(s => s.classList.contains('done'));
+      steps.forEach(s => {
+        if (allDone) s.classList.remove('done');
+        else s.classList.add('done');
+      });
+      updateProgress();
+      updatePhaseCount(phaseId);
+    }
+
+    function updatePhaseCount(phaseId) {
+      const section = document.getElementById(phaseId);
+      const total = section.querySelectorAll('.step').length;
+      const done = section.querySelectorAll('.step.done').length;
+      document.querySelector(`#count-${phaseId} .done-n`).textContent = done;
+      const btn = document.getElementById('toggleall-' + phaseId);
+      if (done === total) {
+        section.classList.add('complete');
+        document.getElementById('nav-' + phaseId).classList.add('complete');
+        if (btn) { btn.textContent = '↺ Unmark All'; btn.classList.add('all-done'); }
+      } else {
+        section.classList.remove('complete');
+        document.getElementById('nav-' + phaseId).classList.remove('complete');
+        if (btn) { btn.textContent = '✓ Mark All Done'; btn.classList.remove('all-done'); }
+      }
+    }
+
+    function updateProgress() {
+      const all = document.querySelectorAll('.step').length;
+      const done = document.querySelectorAll('.step.done').length;
+      const pct = all ? Math.round(done / all * 100) : 0;
+      document.getElementById('prog-fill').style.width = pct + '%';
+      document.getElementById('prog-label').textContent = `${done} / ${all} done`;
+      document.getElementById('done-banner').style.display = (done === all && all > 0) ? 'block' : 'none';
+    }
+
+    function resetAll() {
+      document.querySelectorAll('.step.done').forEach(s => s.classList.remove('done'));
+      document.querySelectorAll('.step.open').forEach(s => s.classList.remove('open'));
+      document.querySelectorAll('.phase.complete').forEach(s => s.classList.remove('complete'));
+      document.querySelectorAll('.sidebar-phase.complete').forEach(s => s.classList.remove('complete'));
+      document.querySelectorAll('.toggle-all-btn').forEach(b => { b.textContent = '✓ Mark All Done'; b.classList.remove('all-done'); });
+      PHASES.forEach(p => {
+        const el = document.querySelector(`#count-${p.id} .done-n`);
+        if (el) el.textContent = '0';
+      });
+      updateProgress();
+    }
+
+    /* ─── SIDEBAR ACTIVE STATE ─── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          document.querySelectorAll('.sidebar-phase').forEach(l => l.classList.remove('active'));
+          const link = document.getElementById('nav-' + e.target.id);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.phase').forEach(p => observer.observe(p));
+
+    updateProgress();
+  </script>
+</body>
+
+</html>

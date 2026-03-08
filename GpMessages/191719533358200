@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?><messages><msg code="0" type="2">Start Time: Sunday, March 8, 2026 3:18:01 PM</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  PRE-FLIGHT CHECK</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  OK      County/Parish boundaries</msg><msg code="0" type="0">  OK      LA Voting Districts</msg><msg code="0" type="0">  OK      Iberville Hydrography</msg><msg code="0" type="0">  OK      Iberville Roads</msg><msg code="0" type="50">  MISSING WBR Roads  →  E:\Fiverr\teesmith176\Data\tl_2020_22121_roads\tl_2020_22121_roads.shp</msg><msg code="0" type="50">  MISSING Census Places  →  E:\Fiverr\teesmith176\Data\tl_2020_22_place\tl_2020_22_place.shp</msg><msg code="0" type="50">
+  2 file(s) missing — those layers will be skipped.</msg><msg code="0" type="50">  WBR Roads:     TIGER/Line 2020 &gt; Roads &gt; Louisiana &gt; West Baton Rouge</msg><msg code="0" type="50">  Census Places: TIGER/Line 2020 &gt; Places &gt; Louisiana</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 1 — Extracting Feature Classes into GDB</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">
+  1a  Iberville Parish Boundary</msg><msg code="0" type="0">    Selected 3235 feature(s) → saved</msg><msg code="0" type="0">
+  1b  West Baton Rouge Parish Boundary</msg><msg code="0" type="0">    Selected 3235 feature(s) → saved</msg><msg code="0" type="0">
+  1c  Iberville Precincts (17 target precincts)</msg><msg code="1" type="100">Traceback (most recent call last):
+﻿  File "E:\Fiverr\teesmith176\Scripts\Louisiana Campaign Mapping.pyt", line 163, in execute
+    arcpy.management.SelectLayerByAttribute(SHP_VTD, "NEW_SELECTION", sql)
+﻿  File "C:\Program Files\ArcGIS\Pro\Resources\ArcPy\arcpy\management.py", line 16477, in SelectLayerByAttribute
+    raise e
+﻿  File "C:\Program Files\ArcGIS\Pro\Resources\ArcPy\arcpy\management.py", line 16471, in SelectLayerByAttribute
+    gp.SelectLayerByAttribute_management(
+﻿  File "C:\Program Files\ArcGIS\Pro\Resources\ArcPy\arcpy\geoprocessing\_base.py", line 532, in &lt;lambda&gt;
+    return lambda *args: val(*gp_fixargs(args, True))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+﻿arcgisscripting.ExecuteError: ERROR 160327: A column was specified that does not exist.
+Failed to execute (SelectLayerByAttribute).
+
+﻿
+If you suspect this is an IPython 8.18.1 bug, please report it at:
+    https://github.com/ipython/ipython/issues
+or send an email to the mailing list at ipython-dev@python.org
+
+You can print a more detailed traceback right now with "%tb", or use "%debug"
+to interactively debug it.
+
+Extra-detailed tracebacks for bug-reporting purposes can be enabled via:
+    %config Application.verbose_crash=True
+
+</msg><msg code="-2147467259" type="100">Failed to execute (Tool).</msg><msg code="0" type="3">Failed at Sunday, March 8, 2026 3:18:03 PM (Elapsed Time: 1.57 seconds)</msg></messages>

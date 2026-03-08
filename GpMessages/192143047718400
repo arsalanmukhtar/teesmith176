@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?><messages><msg code="0" type="2">Start Time: Sunday, March 8, 2026 3:25:05 PM</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  PRE-FLIGHT CHECK</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  OK      County/Parish boundaries</msg><msg code="0" type="0">  OK      LA Voting Districts</msg><msg code="0" type="0">  OK      Iberville Hydrography</msg><msg code="0" type="0">  OK      Iberville Roads</msg><msg code="0" type="50">  MISSING WBR Roads  →  E:\Fiverr\teesmith176\Data\tl_2020_22121_roads\tl_2020_22121_roads.shp</msg><msg code="0" type="50">  MISSING Census Places  →  E:\Fiverr\teesmith176\Data\tl_2020_22_place\tl_2020_22_place.shp</msg><msg code="0" type="50">
+  2 file(s) missing — those layers will be skipped.</msg><msg code="0" type="50">  WBR Roads:     TIGER/Line 2020 &gt; Roads &gt; Louisiana &gt; West Baton Rouge</msg><msg code="0" type="50">  Census Places: TIGER/Line 2020 &gt; Places &gt; Louisiana</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 1 — Extracting Feature Classes into GDB</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">
+  VTD fields detected: STATEFP20, COUNTYFP20, VTDST20</msg><msg code="0" type="0">
+  1a  Iberville Parish Boundary</msg><msg code="0" type="0">    Selected 1 feature(s) - saved</msg><msg code="0" type="0">
+  1b  West Baton Rouge Parish Boundary</msg><msg code="0" type="0">    Selected 1 feature(s) - saved</msg><msg code="0" type="0">
+  1c  Iberville Precincts (17 target precincts)</msg><msg code="0" type="0">    Selected 17 feature(s) - saved</msg><msg code="0" type="0">
+  1d  WBR Precinct 1C — auto-detecting VTDST20 code</msg><msg code="0" type="0">    Detected code: '00001C' - saved</msg><msg code="0" type="0">
+  1e  Iberville Waterways</msg><msg code="0" type="0">    Saved</msg><msg code="0" type="0">
+  1f  Iberville Roads (S1100 + S1200)</msg><msg code="0" type="0">    100 road features - saved</msg><msg code="0" type="50">
+  1h  Census Places - SKIPPED (file not downloaded yet)</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 2 — Adding Layers to Map</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  Added: Waterways</msg><msg code="0" type="0">  Added: Iberville_Parish_Boundary</msg><msg code="0" type="0">  Added: WBR_Parish_Boundary</msg><msg code="0" type="0">  Added: Iberville_Roads_Major</msg><msg code="0" type="50">  SKIP (not found): WBR_Roads_Major</msg><msg code="0" type="0">  Added: Iberville_Precincts_17</msg><msg code="0" type="0">  Added: WBR_Precinct_1C</msg><msg code="0" type="50">  SKIP (not found): Communities_Iberville</msg><msg code="0" type="50">  SKIP (not found): Communities_WBR</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 3 — Applying Symbology</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  Waterways — #73B2FF</msg><msg code="0" type="0">  Iberville_Parish_Boundary — no fill, #1A1A2E 1.5pt</msg><msg code="0" type="0">  WBR_Parish_Boundary — no fill, #4A235A dashed 1.5pt</msg><msg code="0" type="0">  Iberville_Precincts_17 — 17 unique colours, 35% transparency</msg><msg code="0" type="0">  WBR_Precinct_1C — #F5CBA7 fill, #E67E22 outline 2pt, 35%</msg><msg code="0" type="0">  Iberville_Roads_Major — S1100 #CCCCCC 1.5pt, S1200 #9C9C9C 0.8pt</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 4 — Configuring Labels</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  Iberville_Parish_Boundary labels — ON</msg><msg code="0" type="0">  WBR_Parish_Boundary labels — ON</msg><msg code="0" type="0">  WBR_Precinct_1C labels — ON</msg><msg code="0" type="0">  Iberville_Precincts_17 labels — OFF</msg><msg code="0" type="0">  Iberville_Roads_Major labels — FULLNAME, S1100 only, Inter 9pt</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  PHASE 5 — Setting Layer Draw Order</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">  Layer order set and project saved.</msg><msg code="0" type="0">
+=======================================================</msg><msg code="0" type="0">  COMPLETE — Phases 1 through 5 finished</msg><msg code="0" type="0">=======================================================</msg><msg code="0" type="0">
+  What was automated:
+    OK  All feature classes extracted into the GDB
+    OK  All layers added to the map
+    OK  Symbology applied (colours, transparency, outlines)
+    OK  Labels configured (fonts, halos, SQL filters)
+    OK  Layer draw order set
+
+  Two manual steps still needed (Label Class &gt; Position tab):
+    -&gt; Iberville_Parish_Boundary: Offset X = -25pt, Y = -15pt
+    -&gt; WBR_Parish_Boundary:       Offset X = +25pt, Y = -15pt
+
+  Proceed to Phase 6 (Layout) manually in ArcGIS Pro.
+        </msg><msg code="0" type="3">Succeeded at Sunday, March 8, 2026 3:25:12 PM (Elapsed Time: 7.36 seconds)</msg></messages>
