@@ -6,5 +6,6 @@ Data/**/*.shp filter=lfs diff=lfs merge=lfs -text
 Data/**/*.dbf filter=lfs diff=lfs merge=lfs -text
 Data/**/*.shx filter=lfs diff=lfs merge=lfs -text
 Data/**/*.prj filter=lfs diff=lfs merge=lfs -text
+Data/**/*.pagx filter=lfs diff=lfs merge=lfs -text
 Docs/**/*.docx filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
