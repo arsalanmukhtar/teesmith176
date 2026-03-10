@@ -9,3 +9,4 @@ Data/**/*.prj filter=lfs diff=lfs merge=lfs -text
 Data/**/*.pagx filter=lfs diff=lfs merge=lfs -text
 Docs/**/*.docx filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
+Data/Sheets/*.csv filter=lfs diff=lfs merge=lfs -text
